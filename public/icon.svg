@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="50%" stop-color="#0d9488" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="doorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#e2e8f0" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#022c22" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Background Squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+
+  <!-- Inner Soft Glow -->
+  <circle cx="256" cy="120" r="180" fill="#34d399" opacity="0.25" filter="blur(30px)" />
+
+  <!-- Refrigerator Body -->
+  <g filter="url(#shadow)">
+    <!-- Main Outer Fridge Box -->
+    <rect x="144" y="96" width="224" height="320" rx="28" fill="url(#doorGrad)" />
+
+    <!-- Upper Freezer Door Separator Line -->
+    <rect x="144" y="210" width="224" height="6" fill="#cbd5e1" />
+
+    <!-- Freezer Handle -->
+    <rect x="162" y="160" width="10" height="36" rx="5" fill="#059669" />
+
+    <!-- Fridge Main Door Handle -->
+    <rect x="162" y="236" width="10" height="64" rx="5" fill="#059669" />
+
+    <!-- Fridge Feet -->
+    <rect x="168" y="416" width="24" height="12" rx="4" fill="#0f172a" />
+    <rect x="320" y="416" width="24" height="12" rx="4" fill="#0f172a" />
+
+    <!-- Interior Content Shelf Peek Hint (Subtle Fresh Green Light Accent) -->
+    <circle cx="280" cy="150" r="12" fill="#10b981" opacity="0.8" />
+    <circle cx="250" cy="154" r="9" fill="#f59e0b" opacity="0.8" />
+  </g>
+
+  <!-- Sparkle / Chef Hat Emblem Badge -->
+  <g transform="translate(320, 80)">
+    <circle cx="36" cy="36" r="36" fill="#f59e0b" />
+    <!-- 4-point Sparkle Star -->
+    <path d="M 36 14 Q 36 36 58 36 Q 36 36 36 58 Q 36 36 14 36 Q 36 36 36 14 Z" fill="#ffffff" />
+  </g>
+</svg>
