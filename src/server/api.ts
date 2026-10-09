@@ -722,16 +722,20 @@ export const getUseItUpRecommendationsFn = createServerFn({ method: 'GET' }).han
     const rec = evaluateRecipeMatch(recipe, rIngredients, userItems, favoriteIds.has(recipe.id))
 
     // Hitung berapa banyak bahan kritis yang dipakai dalam resep ini
-    const criticalRescued = criticalItems.filter((crit: any) =>
-      rec.ingredientsList.some(
-        (ing: any) => ing.hasIngredient && ing.name.toLowerCase().includes(crit.customName.toLowerCase()) || crit.customName.toLowerCase().includes(ing.name.toLowerCase())
-      )
-    )
+    const criticalRescued = criticalItems.filter((crit: any) => {
+      const critName = (crit.customName || '').toLowerCase().trim()
+      if (!critName) return false
+      return rec.ingredientsList.some((ing: any) => {
+        if (!ing.hasIngredient) return false
+        const ingName = (ing.name || '').toLowerCase().trim()
+        return ingName.includes(critName) || critName.includes(ingName)
+      })
+    })
 
     return {
       ...rec,
       criticalRescuedCount: criticalRescued.length,
-      criticalRescuedNames: criticalRescued.map((c: any) => c.customName),
+      criticalRescuedNames: criticalRescued.map((c: any) => c.customName || 'Bahan Kritis'),
     }
   })
 
@@ -754,9 +758,17 @@ export const getUseItUpRecommendationsFn = createServerFn({ method: 'GET' }).han
   }
 })
 
-// 19. RECORD COOKING HISTORY & RATING
+// 19. RECORD COOKING HISTORY & RATING (Dengan opsi kurangi bahan otomatis dari kulkas)
 export const recordCookingHistoryFn = createServerFn({ method: 'POST' })
-  .validator((params: unknown) => params as { recipeId: number; rating?: 'masak_lagi' | 'oke' | 'tidak_akan_ulang'; notes?: string })
+  .validator(
+    (params: unknown) =>
+      params as {
+        recipeId: number
+        rating?: 'masak_lagi' | 'oke' | 'tidak_akan_ulang'
+        notes?: string
+        deductIngredients?: boolean
+      }
+  )
   .handler(async ({ data }) => {
     const user = await getDemoUser()
 
@@ -770,7 +782,55 @@ export const recordCookingHistoryFn = createServerFn({ method: 'POST' })
       })
       .returning()
 
-    return { success: true, history: recorded }
+    let deductedCount = 0
+    if (data.deductIngredients !== false) {
+      const recipeIngredients = await db
+        .select()
+        .from(schema.recipeIngredients)
+        .where(eq(schema.recipeIngredients.recipeId, data.recipeId))
+
+      const rawUserIngredients = await db
+        .select()
+        .from(schema.userIngredients)
+        .where(eq(schema.userIngredients.userId, user.id))
+
+      const userItems: UserIngredientWithStatus[] = rawUserIngredients.map((item: any) => {
+        const days = calculateDaysRemaining(item.expiryDate)
+        return {
+          ...item,
+          daysRemaining: days,
+          status: getExpiryStatus(days),
+        }
+      })
+
+      const [recipe] = await db
+        .select()
+        .from(schema.recipes)
+        .where(eq(schema.recipes.id, data.recipeId))
+
+      if (recipe) {
+        const evaluated = evaluateRecipeMatch(recipe, recipeIngredients, userItems)
+        for (const item of evaluated.ingredientsList) {
+          if (item.hasIngredient && item.matchedUserIngredient) {
+            const userIng = item.matchedUserIngredient
+            const newQty = Math.max(0, Number((userIng.quantity - item.requiredQuantity).toFixed(2)))
+            if (newQty <= 0) {
+              await db
+                .delete(schema.userIngredients)
+                .where(eq(schema.userIngredients.id, userIng.id))
+            } else {
+              await db
+                .update(schema.userIngredients)
+                .set({ quantity: newQty, updatedAt: new Date() })
+                .where(eq(schema.userIngredients.id, userIng.id))
+            }
+            deductedCount++
+          }
+        }
+      }
+    }
+
+    return { success: true, history: recorded, deductedCount }
   })
 
 // 20. GET COOKING HISTORY

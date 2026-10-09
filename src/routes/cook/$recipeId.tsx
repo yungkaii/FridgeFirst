@@ -94,6 +94,7 @@ function CookNowPage() {
   const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false)
   const [selectedRating, setSelectedRating] = useState<'masak_lagi' | 'oke' | 'tidak_akan_ulang'>('masak_lagi')
   const [chefNotes, setChefNotes] = useState('')
+  const [deductIngredients, setDeductIngredients] = useState(true)
   const [isSubmittingRating, setIsSubmittingRating] = useState(false)
 
   const currentStep = recipe.instructions[currentStepIndex] || {
@@ -163,6 +164,7 @@ function CookNowPage() {
           recipeId: recipe.id,
           rating: selectedRating,
           notes: chefNotes,
+          deductIngredients,
         },
       })
       navigate({ to: '/history' as any })
@@ -508,6 +510,19 @@ function CookNowPage() {
                 className="w-full rounded-xl border border-[#302C28] bg-[#12110F] p-2.5 text-xs text-[#F6F2EB] placeholder:text-[#A7A098]/50 focus:border-[#00C995] focus:outline-none"
               />
             </div>
+
+            {/* Deduct Ingredients Checkbox */}
+            <label className="flex items-center gap-2.5 cursor-pointer text-left text-xs text-[#A7A098] bg-[#12110F] p-3 rounded-xl border border-[#302C28] hover:border-[#00C995]/40 transition">
+              <input
+                type="checkbox"
+                checked={deductIngredients}
+                onChange={(e) => setDeductIngredients(e.target.checked)}
+                className="h-4 w-4 rounded border-[#302C28] accent-[#00C995] cursor-pointer"
+              />
+              <span className="leading-tight text-[#F6F2EB]">
+                Kurangi bahan yang digunakan otomatis dari kulkas saya
+              </span>
+            </label>
 
             {/* Save & Finish Buttons */}
             <div className="flex gap-3 pt-2">

@@ -53,9 +53,14 @@ export interface RecommendedRecipe {
 }
 
 export function calculateDaysRemaining(expiryDate: string | Date): number {
-  const exp = new Date(expiryDate).getTime()
-  const now = new Date().getTime()
-  return Math.ceil((exp - now) / (1000 * 60 * 60 * 24))
+  const expDate = new Date(expiryDate)
+  const now = new Date()
+
+  // Compare on calendar-day basis (normalized to midnight)
+  const expMidnight = new Date(expDate.getFullYear(), expDate.getMonth(), expDate.getDate()).getTime()
+  const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+
+  return Math.round((expMidnight - nowMidnight) / (1000 * 60 * 60 * 24))
 }
 
 export function getExpiryStatus(daysRemaining: number): ExpiryStatus {
@@ -75,16 +80,25 @@ export function normalizeIngredientName(name: string): string {
 
 export function isIngredientMatch(
   userItem: { ingredientId: number | null; customName: string | null },
-  recipeItem: { ingredientId: number; name: string }
+  recipeItem: { ingredientId?: number | null; name: string }
 ): boolean {
-  if (userItem.ingredientId && userItem.ingredientId === recipeItem.ingredientId) {
-    return true
+  // If both have master ingredient IDs: exact comparison
+  if (userItem.ingredientId && recipeItem.ingredientId) {
+    return userItem.ingredientId === recipeItem.ingredientId
   }
 
   const uName = normalizeIngredientName(userItem.customName || '')
   const rName = normalizeIngredientName(recipeItem.name)
 
   if (!uName || !rName) return false
+  if (uName === rName) return true
+
+  // Guard against false positives between egg (telur) and meat (ayam/daging)
+  const isEggRecipe = rName.includes('telur')
+  const isEggUser = uName.includes('telur')
+  if (isEggRecipe !== isEggUser) {
+    return false
+  }
 
   return uName.includes(rName) || rName.includes(uName)
 }

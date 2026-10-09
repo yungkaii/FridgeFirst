@@ -212,17 +212,16 @@ export async function initAndSeedDatabase() {
               }
             }
 
-            if (matchedIngId) {
-              await db.insert(schema.recipeIngredients).values({
-                recipeId: insertedRecipe.id,
-                ingredientId: matchedIngId,
-                name: item.name,
-                quantity: item.quantity,
-                unit: item.unit,
-                isOptional: item.isOptional ?? false,
-                notes: item.notes ?? '',
-              })
-            }
+            // Insert all recipe ingredients so recipes have their full ingredient lists
+            await db.insert(schema.recipeIngredients).values({
+              recipeId: insertedRecipe.id,
+              ingredientId: matchedIngId ?? null,
+              name: item.name,
+              quantity: item.quantity,
+              unit: item.unit,
+              isOptional: item.isOptional ?? false,
+              notes: item.notes ?? '',
+            })
           }
         }
       }

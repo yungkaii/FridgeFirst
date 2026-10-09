@@ -1,5 +1,5 @@
 // FridgeFirst Progressive Web App Service Worker
-const CACHE_NAME = 'fridgefirst-shell-v1';
+const CACHE_NAME = 'fridgefirst-shell-v2';
 const CORE_ASSETS = [
   '/',
   '/manifest.json',
@@ -44,6 +44,18 @@ self.addEventListener('fetch', (event) => {
 
   // Ignore chrome-extension or external analytics
   if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Never cache Server Functions, API endpoints, or JSON payloads
+  if (
+    url.pathname.startsWith('/_server') ||
+    url.searchParams.has('_serverFnId') ||
+    url.pathname.startsWith('/api') ||
+    url.pathname.startsWith('/__') ||
+    request.headers.get('accept')?.includes('application/json') ||
+    request.headers.has('x-tanstack-start')
+  ) {
     return;
   }
 

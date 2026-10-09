@@ -22,6 +22,9 @@ import {
 } from '../server/api'
 
 export const Route = createFileRoute('/fridge')({
+  validateSearch: (search: Record<string, unknown>): { openAdd?: boolean } => ({
+    openAdd: search.openAdd !== undefined ? search.openAdd === true || search.openAdd === 'true' : undefined,
+  }),
   loader: async () => {
     const fridgeData = await getFridgeItemsFn()
     const masterData = await getMasterIngredientsFn()
@@ -50,6 +53,7 @@ const STATUS_FILTERS = ['Semua', 'Expiring', 'Use Soon', 'Fresh', 'Expired']
 
 function FridgePage() {
   const { items, masterIngredients } = Route.useLoaderData()
+  const searchParams = Route.useSearch()
   const router = useRouter()
 
   // Filters state
@@ -64,6 +68,13 @@ function FridgePage() {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<any | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // React to openAdd search parameter from header
+  useState(() => {
+    if (searchParams.openAdd) {
+      setIsAddModalOpen(true)
+    }
+  })
 
   // Single Add Form State
   const [formName, setFormName] = useState('')
@@ -887,6 +898,25 @@ function FridgePage() {
                   </select>
                 </div>
               </div>
+
+              <div>
+                <label className="block font-semibold text-[#A7A098] mb-1">
+                  Tanggal Kedaluwarsa:
+                </label>
+                  <input
+                    type="date"
+                    value={
+                      editingItem.expiryDate
+                        ? new Date(editingItem.expiryDate).toISOString().split('T')[0]
+                        : ''
+                    }
+                    onChange={(e) =>
+                      setEditingItem({ ...editingItem, expiryDate: e.target.value })
+                    }
+                    className="w-full rounded-xl border border-[#302C28] bg-[#12110F] p-2.5 text-xs text-[#F6F2EB] focus:border-[#00C995] focus:outline-none"
+                    required
+                  />
+                </div>
 
               <div>
                 <label className="block font-semibold text-[#A7A098] mb-1">

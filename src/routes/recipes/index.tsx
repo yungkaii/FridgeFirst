@@ -13,6 +13,23 @@ import { useState } from 'react'
 import { getRecipesFn, toggleFavoriteRecipeFn } from '../../server/api'
 
 export const Route = createFileRoute('/recipes/')({
+  validateSearch: (search: Record<string, unknown>): {
+    search?: string
+    category?: string
+    difficulty?: string
+    maxTime?: number
+    isVegetarian?: boolean
+    onlyReady?: boolean
+    sortBy?: 'waste' | 'match' | 'missing' | 'time'
+  } => ({
+    search: typeof search.search === 'string' ? search.search : undefined,
+    category: typeof search.category === 'string' ? search.category : undefined,
+    difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
+    maxTime: typeof search.maxTime === 'number' ? search.maxTime : undefined,
+    isVegetarian: search.isVegetarian !== undefined ? search.isVegetarian === true || search.isVegetarian === 'true' : undefined,
+    onlyReady: search.onlyReady !== undefined ? search.onlyReady === true || search.onlyReady === 'true' : undefined,
+    sortBy: typeof search.sortBy === 'string' ? (search.sortBy as any) : undefined,
+  }),
   loader: async () => {
     return await getRecipesFn({ data: {} })
   },
@@ -39,16 +56,19 @@ const TIME_OPTIONS = [
 
 function RecipesPage() {
   const initialData = Route.useLoaderData()
+  const searchParams = Route.useSearch()
   const router = useRouter()
 
-  // Filter States
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('Semua')
-  const [difficulty, setDifficulty] = useState('Semua')
-  const [maxTime, setMaxTime] = useState<number>(0)
-  const [isVegetarian, setIsVegetarian] = useState(false)
-  const [onlyReady, setOnlyReady] = useState(false)
-  const [sortBy, setSortBy] = useState<'waste' | 'match' | 'missing' | 'time'>('waste')
+  // Filter States initialized from URL search params if present
+  const [search, setSearch] = useState(searchParams.search || '')
+  const [category, setCategory] = useState(searchParams.category || 'Semua')
+  const [difficulty, setDifficulty] = useState(searchParams.difficulty || 'Semua')
+  const [maxTime, setMaxTime] = useState<number>(searchParams.maxTime || 0)
+  const [isVegetarian, setIsVegetarian] = useState(searchParams.isVegetarian || false)
+  const [onlyReady, setOnlyReady] = useState(searchParams.onlyReady || false)
+  const [sortBy, setSortBy] = useState<'waste' | 'match' | 'missing' | 'time'>(
+    (searchParams.sortBy as any) || 'waste'
+  )
 
   // Filtered client side for instant responsiveness
   let recipes = [...initialData.recipes]

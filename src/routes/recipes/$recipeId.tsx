@@ -34,6 +34,7 @@ function RecipeDetailPage() {
     setIsShoppingAdding(true)
     try {
       const res = await addMissingToShoppingListFn({ data: recipe.id })
+      await router.invalidate()
       setShoppingSuccessMessage(
         `Berhasil menambahkan ${res.addedCount} bahan yang kurang ke daftar belanja!`
       )

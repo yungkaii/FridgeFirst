@@ -16,6 +16,9 @@ import { useState } from 'react'
 import { getCookingHistoryFn, getFavoritesFn } from '../server/api'
 
 export const Route = createFileRoute('/history')({
+  validateSearch: (search: Record<string, unknown>): { tab?: 'history' | 'favorites' } => ({
+    tab: search.tab === 'favorites' ? 'favorites' : search.tab === 'history' ? 'history' : undefined,
+  }),
   loader: async () => {
     const historyData = await getCookingHistoryFn()
     const favoritesData = await getFavoritesFn()
@@ -29,7 +32,8 @@ export const Route = createFileRoute('/history')({
 
 function HistoryPage() {
   const { history, favorites } = Route.useLoaderData()
-  const [activeTab, setActiveTab] = useState<'history' | 'favorites'>('history')
+  const searchParams = Route.useSearch()
+  const [activeTab, setActiveTab] = useState<'history' | 'favorites'>(searchParams.tab || 'history')
 
   const renderRatingBadge = (rating: string) => {
     if (rating === 'masak_lagi') {
